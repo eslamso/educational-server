@@ -7,6 +7,7 @@ interface IQuiz extends Document {
   quizType: string;
   startDate: Date;
   endDate: Date;
+  duration: number;
   participants?:{ userId:Schema.Types.ObjectId; deliveredAt:Date }[];
 }
 
@@ -19,6 +20,7 @@ const quizSchema = new Schema<IQuiz>(
       type: String,
       required: [true, "a quiz must have a name"],
     },
+    duration:Number,
     courseId: {
       type: Schema.Types.ObjectId,
       required: [true, "a quiz must belong to a course"],

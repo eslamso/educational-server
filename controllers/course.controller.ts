@@ -14,7 +14,7 @@ import NotificationModel from "../models/notification.Model";
 import axios from "axios";
 
 // upload pdf
-//  use before it uploadSinglePdfMiddleware you will find it in utils folder
+//  use before it uploadSinglePdfMiddleware("pdf") you will find it in utils folder
 export const uploadPdf = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -52,7 +52,10 @@ export const readPdf = CatchAsyncError(
       if( idx == -1 ){
         return next(new ErrorHandler( "lesson not found" , 400 ));
       };
-      const pdfName=course.courseData[idx].pdf.name;
+      const pdfName=course.courseData[idx]?.pdf?.name;
+      if( !pdfName ){
+        return next(new ErrorHandler( "pdf not found" , 400 ));
+      };
       res.setHeader('Content-Type', 'application/pdf');
       const stream=fs.createReadStream(`uploads/${pdfName}`);
       stream.pipe(res);

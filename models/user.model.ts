@@ -16,6 +16,9 @@ export interface IUser extends Document {
   quizes: Schema.Types.ObjectId[];
   deviceId?: string;
   role: string;
+  mobile?:string;
+  level?:string;
+  governorate?:string;
   isVerified: boolean;
   resetDeviceCode?: string;
   courses: Array<{ courseId: string }>;
@@ -30,6 +33,9 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       type: String,
       required: [true, "Please enter your name"],
     },
+    governorate:String,
+    level:String,
+    mobile:String,
     email: {
       type: String,
       required: [true, "Please enter your email"],

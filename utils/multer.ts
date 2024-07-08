@@ -9,6 +9,36 @@ import sharp from "sharp";
 import { v4 } from "uuid";
 const unlink=promisify(fs.unlink);
 
+const uploadPdf=()=>{
+    const storage=multer.diskStorage(
+        {
+        destination:function(req:Request,file:Express.Multer.File,cb){
+            cb(null,`uploads/`)
+        },
+        filename:function(req:Request,file:Express.Multer.File,cb){
+            const ext=file.mimetype.split('/')[1];
+            let filename=`lesson-${v4()}-${Date.now()}.${ext}`;
+            req.body.pdf=filename;
+            cb(null,filename);
+        }
+        });
+    const filter=function(req:Request,file:Express.Multer.File,cb:multer.FileFilterCallback){
+        const ext=file.mimetype.split('/')[1];
+        if ( ext == 'pdf' ){
+            return cb( null , true );
+        } else { 
+            return cb( new ErrorHandler('Invalid file',400)  );
+        };
+    };
+    return multer({ storage:storage , fileFilter:filter });
+};
+
+
+// whem you use it to the route use uploadSinglePdf("pdf") 
+const uploadSinglePdf=function(field:string){
+    return uploadPdf().single(field);
+};
+
 export const uploadImage=()=>{
     const storage=multer.memoryStorage();
     const filter=function

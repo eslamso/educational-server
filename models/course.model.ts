@@ -142,6 +142,21 @@ const courseSchema = new Schema<ICourse>({
    },
 },{timestamps: true});
 
+courseSchema.post("init",function(){
+  this.courseData.forEach( ({  pdf   } , i ) => { 
+    if( pdf && pdf.name ){
+      this.courseData[i].pdf.url=`${process.env.BACKEND}/uploads/${pdf.name}`
+    }
+  } );
+})
+
+courseSchema.post("save",function(){
+  this.courseData.forEach( ({  pdf   } , i ) => { 
+    if( pdf && pdf.name ){
+      this.courseData[i].pdf.url=`${process.env.BACKEND}/uploads/${pdf.name}`
+    };
+  });
+});
 
 const CourseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
 

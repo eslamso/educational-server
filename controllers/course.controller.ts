@@ -5,12 +5,63 @@ import cloudinary from "cloudinary";
 import { createCourse, getAllCoursesService } from "../services/course.service";
 import CourseModel, { IComment } from "../models/course.model";
 // import { redis } from "../utils/redis";
+import fs from "fs";
 import mongoose from "mongoose";
 import path from "path";
 import ejs from "ejs";
 import sendMail from "../utils/sendMail";
 import NotificationModel from "../models/notification.Model";
 import axios from "axios";
+
+// upload pdf
+//  use before it uploadSinglePdfMiddleware you will find it in utils folder
+export const uploadPdf = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = req.body;
+      const course=await CourseModel.findById(data.courseId);
+      if( !course ){
+        return next(new ErrorHandler("course not found",400));
+      };
+      const idx=course.courseData
+        .findIndex( ( { _id } ) => _id.toString() == data.lessonId?.toString() );
+      if( idx == -1 ){
+        return next(new ErrorHandler( "lesson not found" , 400 ));
+      };
+      course.courseData[idx].pdf.name=data.pdf;
+      await course.save();
+      res.status(200).json({
+        course
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+export const readPdf = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = req.body;
+      const course=await CourseModel.findById(data.courseId);
+      if( !course ){
+        return next(new ErrorHandler("course not found",400));
+      };
+      const idx=course.courseData
+        .findIndex( ( { _id } ) => _id.toString() == data.lessonId?.toString() );
+      if( idx == -1 ){
+        return next(new ErrorHandler( "lesson not found" , 400 ));
+      };
+      const pdfName=course.courseData[idx].pdf.name;
+      res.setHeader('Content-Type', 'application/pdf');
+      const stream=fs.createReadStream(`uploads/${pdfName}`);
+      stream.pipe(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
 
 // upload course
 export const uploadCourse = CatchAsyncError(

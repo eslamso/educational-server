@@ -3,7 +3,7 @@ interface IQuiz extends Document {
   name: string;
   courseId: Schema.Types.ObjectId;
   totalDegree: number;
-  isOpened: boolean;
+  lessonId: Schema.Types.ObjectId;
   quizType: string;
   startDate: Date;
   endDate: Date;
@@ -21,32 +21,17 @@ const quizSchema = new Schema<IQuiz>(
     },
     totalDegree: {
       type: Number,
-      //required: [true, "a quiz must have total degree"],
       default: 0,
     },
-    isOpened: {
-      type: Boolean,
-      default: true,
-    },
-    //questions: [Schema.Types.ObjectId],
     startDate: {
-      type: Date,
-      required: [true, "a quiz must have start Date"],
+      type: Date
     },
     endDate: {
-      type: Date,
-      required: [true, "a quiz must have end Date"],
-      validate: {
-        validator: function (date: Date):boolean {
-          // @ts-ignore
-          return date.getTime() > this.startDate;
-        },
-        message: `endDate must greater than start Date`,
-      },
+      type: Date
     },
     quizType: {
       type: String,
-      default: "homework",
+      default: "exam",
       enum: ["exam", "homework"],
     },
   },

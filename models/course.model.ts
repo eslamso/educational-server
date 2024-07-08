@@ -30,9 +30,11 @@ interface ICourseData extends Document {
   links: ILink[];
   suggestion: string;
   questions: IComment[];
+  quizId:Schema.Types.ObjectId;
+  pdf:{ name:string; url:string; };
 }
 
- export interface ICourse extends Document {
+export interface ICourse extends Document {
   name: string;
   description: string;
   categories: string;
@@ -82,6 +84,8 @@ const courseDataSchema = new Schema<ICourseData>({
   links: [linkSchema],
   suggestion: String,
   questions: [commentSchema],
+  quizId:{ type:Schema.Types.ObjectId , ref:"Quiz" },
+  pdf : { name: String , url: String }
 });
 
 const courseSchema = new Schema<ICourse>({

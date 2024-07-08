@@ -23,6 +23,7 @@ const resultSchema = new Schema<IResult>(
     },
     course: {
       type: Schema.Types.ObjectId,
+      ref:"Course"
     },
     degree: Number,
     totalDegree: Number,

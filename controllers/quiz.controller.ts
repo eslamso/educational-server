@@ -72,7 +72,7 @@ export const submitHomework = CatchAsyncError(
         return next(new ErrorHandler("there is no quiz with this id", 404));
       }
 
-      if (!allowUserToQuiz(req.user?.courses!, quiz.courseId.toString() )) {
+      if ( !allowUserToQuiz(req.user?.courses!, quiz.courseId.toString() ) ) {
         return next(new ErrorHandler("you must enroll course first", 403));
       }
       const userAnswers = req.body.answers as { question:string; ans:string }[];
@@ -105,8 +105,9 @@ export const submitHomework = CatchAsyncError(
         degree: deg,
         totalDegree: quiz?.totalDegree,
         course: courseId,
-        user: req.user?.id,
+        user: req.user?._id
       });
+
       user?.quizes.push(result._id);
       await user?.save();
       res.status(201).json({
@@ -193,20 +194,20 @@ export const getAllQuizes = CatchAsyncError(
       if (req.params.id) filter = { courseId: req.params.id };
       let obj={};
       if (req.user?.role === "user") {
-        let quizIds = await quizModel.find({
-          courseId: { $in: req.user?.courses.map( ({ courseId }) => courseId ) },
-        }).select("_id");
-        const ids=quizIds.map( ( { _id } ) => _id  );
-        obj={ _id : { $in : ids } };
-      }
-      let quiz = await quizModel.find({ ... obj , ... filter  }).populate({
-        path: "results",
-        select: "degree -quiz",
-        populate: { path: "user", select: "name" },
-      });
+        const Ids =req.user?.courses.map( ({ courseId }) => courseId );
+        obj={ courseId : { $in : Ids } };
+      };
+
+      let quiz = await quizModel.find({ ... obj , ... filter , ... req.query  });
+      // .populate({
+      //   path: "results",
+      //   select: "degree -quiz",
+      //   populate: { path: "user", select: "name" }
+      // });
       if( quiz.length == 0 ){
         return next( new ErrorHandler("no quiz found",400) );
       };
+
       res.status(200).json({
         success: true,
         result: quiz.length,
@@ -226,7 +227,7 @@ export const takeQuiz = CatchAsyncError(
       if ( !quiz || quiz.quizType == "homework" ) {
         return next(new ErrorHandler("there is no quiz with this id", 404));
       }
-      if (quiz?.startDate.getTime() >= Date.now()) {
+      if ( quiz?.startDate.getTime() >= Date.now() ) {
         return next(new ErrorHandler("quiz is not started yet", 400));
       }
 
@@ -252,6 +253,7 @@ export const takeQuiz = CatchAsyncError(
         userId: req.user?._id,
         deliveredAt: new Date()
       });
+
       await quiz.save();
       const questions = await questionModel.find({ quiz: quiz._id });
       res.status(201).json({
@@ -297,10 +299,12 @@ export const submitQuiz = CatchAsyncError(
       if( idx == -1 ){
         return next( new ErrorHandler("you have not already taken quiz",400) )
       };
+
       const time=Date.now() - quiz.participants[idx].deliveredAt.getTime();
       if(  time < quiz.duration*60*1000  ){
         return next( new ErrorHandler(`quiz duration is ${quiz.duration} minutes`,400 ) )
       };
+
       const userAnswers = req.body.answers as { question:string; ans:string }[];
       // console.log(userAnswars);
       const user = req.user;
@@ -344,16 +348,12 @@ export const submitQuiz = CatchAsyncError(
   }
 );
 
-const allowUserToQuiz = (courses: {courseId:string}[] , quizId:string) => {
-  let found: boolean = false;
-  courses.map((el) => {
-    if (el.courseId.toString() === quizId.toString()) {
-      found = true;
-      return found;
-    }
-  });
+const allowUserToQuiz = (courses: {courseId:string}[] , Id:string) => {
+  const found=courses.some(({ courseId }) => courseId.toString() == Id.toString() );
   return found;
 };
+
+
 
 
 export const getMyResults = CatchAsyncError(
@@ -371,6 +371,53 @@ export const getMyResults = CatchAsyncError(
       res.status(201).json({
         success: true,
         result: user?.quizes,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+
+// get One Quiz
+export const getOneQuiz = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const quiz = await quizModel.findById(req.params.quizId).populate({
+        path: "results",
+        select: "degree -quiz",
+        populate: { path: "user", select: "name" }
+      });
+      if( ! quiz ){
+        return next( new ErrorHandler("quiz not found",400) )
+      };
+      res.status(201).json({
+        success: true,
+        quiz
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+export const getAllResults = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const results=await resultModel
+        .find({ ... req.query })
+        .sort("-degree")
+        .populate([
+          { path:"quiz" , select:"name totalDegree" }
+          ,{path:"user",select:"email name avatar"},
+          { path:"course" , select:"name description" }
+        ]);
+      if( results.length == 0 ){
+        return next( new ErrorHandler("results not found",400) )
+      };
+      res.status(201).json({
+        success: true,
+        results
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));

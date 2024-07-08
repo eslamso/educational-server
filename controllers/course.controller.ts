@@ -150,7 +150,7 @@ export const getCourseByUser = CatchAsyncError(
         );
       }
 
-      const course = await CourseModel.findById(courseId);
+      const course = await CourseModel.findById(courseId).populate("courseData.quizId");
 
       const content = course?.courseData;
 

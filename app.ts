@@ -16,32 +16,39 @@ import mongoStore from "connect-mongo";
 import session from "express-session";
 import questionRouter from "./routes/question.route";
 import resultRouter from "./routes/result.model";
+import path from "path";
+
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 // body parser
 app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 // cookie parser
 
 // cors => cross origin resource sharing
-app.use(cors({
-  origin:["http://localhost:3000"],
-  credentials:true
-}));
-
-app.use(session({
-  name:"Session_Id",
-  saveUninitialized:true,
-  resave:false,
-  secret:'some secret',
-  cookie : {
-    maxAge:4*365*24*60*60*1000
-  },
-  store : mongoStore.create({
-    mongoUrl:process.env.DB_URL,
-    ttl:4*365*24*60*60*1000
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
   })
-}));
+);
+
+app.use(
+  session({
+    name: "Session_Id",
+    saveUninitialized: true,
+    resave: false,
+    secret: "some secret",
+    cookie: {
+      maxAge: 4 * 365 * 24 * 60 * 60 * 1000,
+    },
+    store: mongoStore.create({
+      mongoUrl: process.env.DB_URL,
+      ttl: 4 * 365 * 24 * 60 * 60 * 1000,
+    }),
+  })
+);
 
 // api requests limit
 const limiter = rateLimit({

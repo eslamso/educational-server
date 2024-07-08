@@ -14,6 +14,7 @@ import { authorizeRoles, isAutheticated } from "../middleware/auth";
 import questionRouter from "./question.route";
 const quizRouter = express.Router({ mergeParams: true });
 quizRouter.use("/quiz/:quizId", questionRouter);
+// create quiz of type exam
 quizRouter.post(
   "/create-quiz",
   isAutheticated,
@@ -32,16 +33,14 @@ quizRouter.delete(
   authorizeRoles("admin"),
   deleteQuiz
 );
+//take quiz of type exam
 quizRouter.get(
   "/take-quiz/:quizId",
   isAutheticated,
   authorizeRoles("user"),
   takeQuiz
 ); // get questions of quiz for user
-quizRouter.get(
-  "/get-All-quizes", 
-  isAutheticated,
-  getAllQuizes);
+quizRouter.get("/get-All-quizes", isAutheticated, getAllQuizes);
 quizRouter.post(
   "/submit-quiz/:quizId",
   isAutheticated,

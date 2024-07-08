@@ -29,15 +29,15 @@ interface IRegistrationBody {
   email: string;
   password: string;
   avatar?: string;
-  level?:string;
-  mobile?:string;
-  governorate?:string;
+  level?: string;
+  mobile?: string;
+  governorate?: string;
 }
 
 export const registrationUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name, email, password,level,mobile,governorate } = req.body;
+      const { name, email, password, level, mobile, governorate } = req.body;
       const isEmailExist = await userModel.findOne({ email });
       if (isEmailExist) {
         return next(new ErrorHandler("Email already exist", 400));
@@ -46,7 +46,9 @@ export const registrationUser = CatchAsyncError(
         name,
         email,
         password,
-        level,mobile,governorate
+        level,
+        mobile,
+        governorate,
       };
 
       const activationToken = createActivationToken(user);
@@ -103,7 +105,6 @@ export const createActivationToken = (user: any): IActivationToken => {
   return { token, activationCode };
 };
 
-
 export const requestToLoginFromAnotherDevice = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -120,8 +121,8 @@ export const requestToLoginFromAnotherDevice = CatchAsyncError(
       );
       isExist.resetDeviceCode = code;
       await isExist.save();
-      const link=`${process.env.FRONTEND}/change-device/${token}`;
-      const html = resetDeviceHTML(isExist.name,link);
+      const link = `${process.env.FRONTEND}/change-device/${token}`;
+      const html = resetDeviceHTML(isExist.name, link);
       try {
         await sendMail({
           email: isExist.email,
@@ -151,18 +152,19 @@ export const changeDevice = CatchAsyncError(
       const decoded = jwt.verify(
         token,
         process.env.ACTIVATION_SECRET as string
-      ) as { email: string, code: string };
-      if(!decoded){
-        return next( new ErrorHandler("invalid token",400) );
-      };
-      const user = await userModel.findOne({ email : decoded.email })
+      ) as { email: string; code: string };
+      if (!decoded) {
+        return next(new ErrorHandler("invalid token", 400));
+      }
+      const user = await userModel
+        .findOne({ email: decoded.email })
         .select("+password");
       if (!user) {
         return next(new ErrorHandler("Invalid email or password", 400));
       }
-      if( user.resetDeviceCode != decoded.code ){
+      if (user.resetDeviceCode != decoded.code) {
         return next(new ErrorHandler("device has been already changed", 400));
-      };
+      }
       const isPasswordMatch = await user.comparePassword(password);
       if (!isPasswordMatch) {
         return next(new ErrorHandler("Invalid email or password", 400));
@@ -178,7 +180,6 @@ export const changeDevice = CatchAsyncError(
     }
   }
 );
-
 
 // activate user
 interface IActivationRequest {
@@ -201,7 +202,8 @@ export const activateUser = CatchAsyncError(
         return next(new ErrorHandler("Invalid activation code", 400));
       }
 
-      const { name, email, password,level,mobile,governorate } = newUser.user;
+      const { name, email, password, level, mobile, governorate } =
+        newUser.user;
 
       const existUser = await userModel.findOne({ email });
 
@@ -212,7 +214,9 @@ export const activateUser = CatchAsyncError(
         name,
         email,
         password,
-        level,mobile,governorate
+        level,
+        mobile,
+        governorate,
       });
       const code = crypto.randomBytes(4).toString("hex");
       user.deviceId = code;
@@ -252,10 +256,12 @@ export const loginUser = CatchAsyncError(
       const isPasswordMatch = await user.comparePassword(password);
       if (!isPasswordMatch) {
         return next(new ErrorHandler("Invalid email or password", 400));
-      } 
-      if( user.deviceId != req.session.deviceId && user.role == "user" ){
-        return next( new ErrorHandler("you are not have permession to access route",400) );
-      };
+      }
+      if (user.deviceId != req.session.deviceId && user.role == "user") {
+        return next(
+          new ErrorHandler("you are not have permession to access route", 400)
+        );
+      }
       sendToken(user, 200, res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
@@ -293,16 +299,20 @@ export const updateAccessToken = CatchAsyncError(
       if (!decoded) {
         return next(new ErrorHandler(message, 400));
       }
-      
-      const user=await userModel.findById(decoded.id); // new
-      if(!user){ // new
-        return next( // new
-              new ErrorHandler("user not found!", 400) // new
-            ) // new
-      };// new
-      if( user.deviceId != req.session.deviceId && user.role == "user" ){
-        return next( new ErrorHandler("you are not have permession to access route",400) );
-      };
+
+      const user = await userModel.findById(decoded.id); // new
+      if (!user) {
+        // new
+        return next(
+          // new
+          new ErrorHandler("user not found!", 400) // new
+        ); // new
+      } // new
+      if (user.deviceId != req.session.deviceId && user.role == "user") {
+        return next(
+          new ErrorHandler("you are not have permession to access route", 400)
+        );
+      }
 
       // const session = await redis.get(decoded.id as string);
       // if (!session) {
@@ -377,9 +387,11 @@ export const socialAuth = CatchAsyncError(
         await newUser.save();
         sendToken(newUser, 200, res);
       } else {
-        if( user.deviceId != req.session.deviceId && user.role == "user" ){
-          return next( new ErrorHandler("you are not have permession to access route",400) );
-        };
+        if (user.deviceId != req.session.deviceId && user.role == "user") {
+          return next(
+            new ErrorHandler("you are not have permession to access route", 400)
+          );
+        }
         sendToken(user, 200, res);
       }
     } catch (error: any) {
@@ -532,11 +544,11 @@ export const getAllUsers = CatchAsyncError(
 export const updateUserRole = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, role } = req.body;
+      const { email, role, courses } = req.body;
       const isUserExist = await userModel.findOne({ email });
       if (isUserExist) {
         const id = isUserExist._id;
-        updateUserRoleService(res, id, role);
+        updateUserRoleService(res, id, role, courses);
       } else {
         res.status(400).json({
           success: false,

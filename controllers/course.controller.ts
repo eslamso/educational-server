@@ -19,19 +19,21 @@ export const uploadPdf = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.body;
-      const course=await CourseModel.findById(data.courseId);
-      if( !course ){
-        return next(new ErrorHandler("course not found",400));
-      };
-      const idx=course.courseData
-        .findIndex( ( { _id } ) => _id.toString() == data.lessonId?.toString() );
-      if( idx == -1 ){
-        return next(new ErrorHandler( "lesson not found" , 400 ));
-      };
-      course.courseData[idx].pdf.name=data.pdf;
+      const course = await CourseModel.findById(data.courseId);
+      if (!course) {
+        return next(new ErrorHandler("course not found", 400));
+      }
+      const idx = course.courseData.findIndex(
+        ({ _id }) => _id.toString() == data.lessonId?.toString()
+      );
+      //console.log(course.courseData, idx);
+      if (idx == -1) {
+        return next(new ErrorHandler("lesson not found", 400));
+      }
+      course.courseData[idx].pdf.name = data.pdf;
       await course.save();
       res.status(200).json({
-        course
+        course,
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
@@ -39,27 +41,27 @@ export const uploadPdf = CatchAsyncError(
   }
 );
 
-
 // Get Request source route pdf/:courseId/lesson/:lessonId
 export const readPdf = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.params;
-      const course=await CourseModel.findById(data.courseId);
-      if( !course ){
-        return next(new ErrorHandler("course not found",400));
-      };
-      const idx=course.courseData
-        .findIndex( ( { _id } ) => _id.toString() == data.lessonId?.toString() );
-      if( idx == -1 ){
-        return next(new ErrorHandler( "lesson not found" , 400 ));
-      };
-      const pdfName=course.courseData[idx]?.pdf?.name;
-      if( !pdfName ){
-        return next(new ErrorHandler( "pdf not found" , 400 ));
-      };
-      res.setHeader('Content-Type', 'application/pdf');
-      const stream=fs.createReadStream(`uploads/${pdfName}`);
+      const course = await CourseModel.findById(data.courseId);
+      if (!course) {
+        return next(new ErrorHandler("course not found", 400));
+      }
+      const idx = course.courseData.findIndex(
+        ({ _id }) => _id.toString() == data.lessonId?.toString()
+      );
+      if (idx == -1) {
+        return next(new ErrorHandler("lesson not found", 400));
+      }
+      const pdfName = course.courseData[idx]?.pdf?.name;
+      if (!pdfName) {
+        return next(new ErrorHandler("pdf not found", 400));
+      }
+      res.setHeader("Content-Type", "application/pdf");
+      const stream = fs.createReadStream(`uploads/${pdfName}`);
       stream.pipe(res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
@@ -67,23 +69,11 @@ export const readPdf = CatchAsyncError(
   }
 );
 
-
 // upload course
 export const uploadCourse = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.body;
-      const thumbnail = data.thumbnail;
-      if (thumbnail) {
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
-          folder: "courses",
-        });
-
-        data.thumbnail = {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        };
-      }
       createCourse(data, res, next);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
@@ -96,33 +86,7 @@ export const editCourse = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.body;
-
-      const thumbnail = data.thumbnail;
-
       const courseId = req.params.id;
-
-      const courseData = (await CourseModel.findById(courseId)) as any;
-
-      if (thumbnail && !thumbnail.startsWith("https")) {
-        await cloudinary.v2.uploader.destroy(courseData.thumbnail.public_id);
-
-        const myCloud = await cloudinary.v2.uploader.upload(thumbnail, {
-          folder: "courses",
-        });
-
-        data.thumbnail = {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        };
-      }
-
-      if (thumbnail.startsWith("https")) {
-        data.thumbnail = {
-          public_id: courseData?.thumbnail.public_id,
-          url: courseData?.thumbnail.url,
-        };
-      }
-
       const course = await CourseModel.findByIdAndUpdate(
         courseId,
         {
@@ -206,7 +170,9 @@ export const getCourseByUser = CatchAsyncError(
         );
       }
 
-      const course = await CourseModel.findById(courseId).populate("courseData.quizId");
+      const course = await CourseModel.findById(courseId).populate(
+        "courseData.quizId"
+      );
 
       const content = course?.courseData;
 

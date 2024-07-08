@@ -11,12 +11,14 @@ import {
   getAllCourses,
   getCourseByUser,
   getSingleCourse,
+  readPdf,
   uploadCourse,
+  uploadPdf,
 } from "../controllers/course.controller";
 import { authorizeRoles, isAutheticated } from "../middleware/auth";
 import quizRouter from "./quiz.route";
+import { uploadSinglePdf } from "../utils/multer";
 const courseRouter = express.Router();
-
 courseRouter.use("/course/:id/", quizRouter);
 courseRouter.post(
   "/create-course",
@@ -24,6 +26,11 @@ courseRouter.post(
   authorizeRoles("admin"),
   uploadCourse
 );
+
+courseRouter.route("pdf/:courseId/lesson/:lessonId")
+    .get(isAutheticated,readPdf);
+courseRouter.route("pdf")
+    .post(isAutheticated,authorizeRoles("admin"),uploadSinglePdf("pdf"),uploadPdf);
 
 courseRouter.put(
   "/edit-course/:id",

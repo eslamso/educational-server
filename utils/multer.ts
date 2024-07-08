@@ -35,7 +35,7 @@ const uploadPdf=()=>{
 
 
 // whem you use it to the route use uploadSinglePdf("pdf") 
-const uploadSinglePdf=function(field:string){
+export const uploadSinglePdf=function(field:string){
     return uploadPdf().single(field);
 };
 

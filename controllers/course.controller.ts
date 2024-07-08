@@ -39,10 +39,12 @@ export const uploadPdf = CatchAsyncError(
   }
 );
 
+
+// Get Request source route pdf/:courseId/lesson/:lessonId
 export const readPdf = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = req.body;
+      const data = req.params;
       const course=await CourseModel.findById(data.courseId);
       if( !course ){
         return next(new ErrorHandler("course not found",400));

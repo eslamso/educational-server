@@ -9,13 +9,14 @@ interface IResult extends Document {
 // mongoose types
 // ts types
 // Date
-// 
+//
 
 const resultSchema = new Schema<IResult>(
   {
     quiz: {
       type: Schema.Types.ObjectId,
       required: [true, "a result must belong to quiz"],
+      ref: "Quiz",
     },
     user: {
       type: Schema.Types.ObjectId,
@@ -23,7 +24,7 @@ const resultSchema = new Schema<IResult>(
     },
     course: {
       type: Schema.Types.ObjectId,
-      ref:"Course"
+      ref: "Course",
     },
     degree: Number,
     totalDegree: Number,

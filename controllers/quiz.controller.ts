@@ -88,7 +88,7 @@ export const submitHomework = CatchAsyncError(
       const user = req.user;
       const courseId = quiz?.courseId;
       const quesions = await questionModel.find({
-        courseId,
+        quiz: quiz._id,
         _id: { $in: userAnswers.map(({ question }) => question) },
       });
       // console.log(quesions);
@@ -202,12 +202,16 @@ export const getAllQuizes = CatchAsyncError(
       let filter = {};
       if (req.params.id) filter = { courseId: req.params.id };
       let obj = {};
+      let quiz = [];
       if (req.user?.role === "user") {
         const Ids = req.user?.courses.map(({ courseId }) => courseId);
         obj = { courseId: { $in: Ids } };
+        quiz = await quizModel
+          .find({ ...obj, ...filter, ...req.query })
+          .select("-participants");
+      } else {
+        quiz = await quizModel.find({ ...obj, ...filter, ...req.query });
       }
-
-      let quiz = await quizModel.find({ ...obj, ...filter, ...req.query });
       // .populate({
       //   path: "results",
       //   select: "degree -quiz",
@@ -318,8 +322,13 @@ export const submitQuiz = CatchAsyncError(
       }
 
       const time = Date.now() - quiz.participants[idx].deliveredAt.getTime();
-      console.log(time * 1000, quiz.duration * 60 * 1000);
-      if (time * 1000 < quiz.duration * 60 * 1000) {
+      // console.log(
+      //   quiz.participants[idx].deliveredAt.getTime(),
+      //   Date.now(),
+      //   time,
+      //   quiz.duration * 60 * 1000
+      // );
+      if (time > quiz.duration * 60 * 1000) {
         return next(
           new ErrorHandler(`quiz duration is ${quiz.duration} minutes`, 400)
         );
@@ -389,11 +398,16 @@ export const getMyResults = CatchAsyncError(
       const user = await req.user?.populate({
         path: "quizes",
         select: "-user",
-        populate: [{ path: "quiz" }, { path: "course" }],
+        populate: [
+          { path: "quiz", select: "-participants" },
+          { path: "course" },
+        ],
       });
       res.status(201).json({
         success: true,
-        result: user?.quizes,
+        message: "all quizzes found are completed",
+        nOfQuizzes: user?.quizes.length,
+        results: user?.quizes,
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
@@ -432,7 +446,10 @@ export const getAllResults = CatchAsyncError(
         .populate([
           { path: "quiz", select: "name totalDegree" },
           { path: "user", select: "email name avatar" },
-          { path: "course", select: "name description" },
+          {
+            path: "course",
+            select: "name",
+          },
         ]);
       if (results.length == 0) {
         return next(new ErrorHandler("results not found", 400));

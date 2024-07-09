@@ -13,7 +13,7 @@ import {
   updateUserInfo,
   updateUserRole,
   requestToLoginFromAnotherDevice,
-  changeDevice
+  changeDevice,
 } from "../controllers/user.controller";
 import { authorizeRoles, isAutheticated } from "../middleware/auth";
 const userRouter = express.Router();
@@ -23,16 +23,21 @@ userRouter.post("/registration", registrationUser);
 userRouter.post("/activate-user", activateUser);
 
 userRouter.post("/login", loginUser);
-userRouter.post("/request-change-device",isAutheticated,authorizeRoles("admin"),requestToLoginFromAnotherDevice);
+userRouter.post(
+  "/request-change-device",
+  isAutheticated,
+  authorizeRoles("admin"),
+  requestToLoginFromAnotherDevice
+);
 userRouter.post("/change-device", changeDevice);
 
-userRouter.get("/logout",isAutheticated, logoutUser);
+userRouter.get("/logout", isAutheticated, logoutUser);
 
 userRouter.get("/me", isAutheticated, getUserInfo);
 
 userRouter.post("/social-auth", socialAuth);
 
-userRouter.put("/update-user-info",isAutheticated, updateUserInfo);
+userRouter.put("/update-user-info", isAutheticated, updateUserInfo);
 
 userRouter.put("/update-user-password", isAutheticated, updatePassword);
 

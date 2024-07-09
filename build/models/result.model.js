@@ -39,6 +39,7 @@ const resultSchema = new mongoose_1.Schema({
     },
     course: {
         type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Course"
     },
     degree: Number,
     totalDegree: Number,

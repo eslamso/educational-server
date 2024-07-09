@@ -20,7 +20,7 @@ const cloudinary_1 = __importDefault(require("cloudinary"));
 const change_device_1 = require("../mails/change-device");
 exports.registrationUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, level, mobile, governorate } = req.body;
         const isEmailExist = await user_model_1.default.findOne({ email });
         if (isEmailExist) {
             return next(new ErrorHandler_1.default("Email already exist", 400));
@@ -29,6 +29,7 @@ exports.registrationUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, r
             name,
             email,
             password,
+            level, mobile, governorate
         };
         const activationToken = (0, exports.createActivationToken)(user);
         const activationCode = activationToken.activationCode;
@@ -140,7 +141,7 @@ exports.activateUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, 
         if (newUser.activationCode !== activation_code) {
             return next(new ErrorHandler_1.default("Invalid activation code", 400));
         }
-        const { name, email, password } = newUser.user;
+        const { name, email, password, level, mobile, governorate } = newUser.user;
         const existUser = await user_model_1.default.findOne({ email });
         if (existUser) {
             return next(new ErrorHandler_1.default("Email already exist", 400));
@@ -149,6 +150,7 @@ exports.activateUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, 
             name,
             email,
             password,
+            level, mobile, governorate
         });
         const code = crypto_1.default.randomBytes(4).toString("hex");
         user.deviceId = code;

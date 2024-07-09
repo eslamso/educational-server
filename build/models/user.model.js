@@ -36,6 +36,9 @@ const userSchema = new mongoose_1.default.Schema({
         type: String,
         required: [true, "Please enter your name"],
     },
+    governorate: String,
+    level: String,
+    mobile: String,
     email: {
         type: String,
         required: [true, "Please enter your email"],

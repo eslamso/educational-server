@@ -25,42 +25,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const quizSchema = new mongoose_1.Schema({
+    participants: [
+        { userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" }, deliveredAt: Date }
+    ],
     name: {
         type: String,
         required: [true, "a quiz must have a name"],
     },
+    duration: Number,
     courseId: {
         type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Course",
         required: [true, "a quiz must belong to a course"],
     },
     totalDegree: {
         type: Number,
-        //required: [true, "a quiz must have total degree"],
         default: 0,
     },
-    isOpened: {
-        type: Boolean,
-        default: true,
-    },
-    //questions: [Schema.Types.ObjectId],
     startDate: {
-        type: Date,
-        required: [true, "a quiz must have start Date"],
+        type: Date
     },
     endDate: {
-        type: Date,
-        required: [true, "a quiz must have end Date"],
-        validate: {
-            validator: function (date) {
-                // @ts-ignore
-                return date.getTime() > this.startDate;
-            },
-            message: `endDate must greater than start Date`,
-        },
+        type: Date
     },
     quizType: {
         type: String,
-        default: "homework",
+        default: "exam",
         enum: ["exam", "homework"],
     },
 }, {

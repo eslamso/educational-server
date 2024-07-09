@@ -7,9 +7,14 @@ const express_1 = __importDefault(require("express"));
 const course_controller_1 = require("../controllers/course.controller");
 const auth_1 = require("../middleware/auth");
 const quiz_route_1 = __importDefault(require("./quiz.route"));
+const multer_1 = require("../utils/multer");
 const courseRouter = express_1.default.Router();
 courseRouter.use("/course/:id/", quiz_route_1.default);
 courseRouter.post("/create-course", auth_1.isAutheticated, (0, auth_1.authorizeRoles)("admin"), course_controller_1.uploadCourse);
+courseRouter.route("pdf/:courseId/lesson/:lessonId")
+    .get(auth_1.isAutheticated, course_controller_1.readPdf);
+courseRouter.route("pdf")
+    .post(auth_1.isAutheticated, (0, auth_1.authorizeRoles)("admin"), (0, multer_1.uploadSinglePdf)("pdf"), course_controller_1.uploadPdf);
 courseRouter.put("/edit-course/:id", auth_1.isAutheticated, (0, auth_1.authorizeRoles)("admin"), course_controller_1.editCourse);
 courseRouter.get("/get-course/:id", course_controller_1.getSingleCourse);
 courseRouter.get("/get-courses", course_controller_1.getAllCourses);

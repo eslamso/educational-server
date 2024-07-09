@@ -53,6 +53,8 @@ const courseDataSchema = new mongoose_1.Schema({
     links: [linkSchema],
     suggestion: String,
     questions: [commentSchema],
+    quizId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Quiz" },
+    pdf: { name: String, url: String }
 });
 const courseSchema = new mongoose_1.Schema({
     name: {
@@ -107,5 +109,20 @@ const courseSchema = new mongoose_1.Schema({
         default: 0,
     },
 }, { timestamps: true });
+courseSchema.post("init", function () {
+    this.courseData.forEach(({ pdf }, i) => {
+        if (pdf && pdf.name) {
+            this.courseData[i].pdf.url = `${process.env.BACKEND}/uploads/${pdf.name}`;
+        }
+    });
+});
+courseSchema.post("save", function () {
+    this.courseData.forEach(({ pdf }, i) => {
+        if (pdf && pdf.name) {
+            this.courseData[i].pdf.url = `${process.env.BACKEND}/uploads/${pdf.name}`;
+        }
+        ;
+    });
+});
 const CourseModel = mongoose_1.default.model("Course", courseSchema);
 exports.default = CourseModel;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resizeQuestionImage = exports.uploadImage = void 0;
+exports.resizeQuestionImage = exports.uploadImage = exports.uploadSinglePdf = void 0;
 const multer_1 = __importDefault(require("multer"));
 const ErrorHandler_1 = __importDefault(require("./ErrorHandler"));
 const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
@@ -13,6 +13,35 @@ const util_1 = require("util");
 const sharp_1 = __importDefault(require("sharp"));
 const uuid_1 = require("uuid");
 const unlink = (0, util_1.promisify)(fs_1.default.unlink);
+const uploadPdf = () => {
+    const storage = multer_1.default.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, `uploads/`);
+        },
+        filename: function (req, file, cb) {
+            const ext = file.mimetype.split('/')[1];
+            let filename = `lesson-${(0, uuid_1.v4)()}-${Date.now()}.${ext}`;
+            req.body.pdf = filename;
+            cb(null, filename);
+        }
+    });
+    const filter = function (req, file, cb) {
+        const ext = file.mimetype.split('/')[1];
+        if (ext == 'pdf') {
+            return cb(null, true);
+        }
+        else {
+            return cb(new ErrorHandler_1.default('Invalid file', 400));
+        }
+        ;
+    };
+    return (0, multer_1.default)({ storage: storage, fileFilter: filter });
+};
+// whem you use it to the route use uploadSinglePdf("pdf") 
+const uploadSinglePdf = function (field) {
+    return uploadPdf().single(field);
+};
+exports.uploadSinglePdf = uploadSinglePdf;
 const uploadImage = () => {
     const storage = multer_1.default.memoryStorage();
     const filter = function (req, file, cb) {

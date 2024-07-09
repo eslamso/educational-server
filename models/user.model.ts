@@ -18,6 +18,7 @@ export interface IUser extends Document {
   role: string;
   mobile?: string;
   level?: string;
+  nationalId?: string;
   governorate?: string;
   isVerified: boolean;
   resetDeviceCode?: string;
@@ -36,6 +37,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     governorate: String,
     level: String,
     mobile: String,
+    nationalId:String,
     email: {
       type: String,
       required: [true, "Please enter your email"],

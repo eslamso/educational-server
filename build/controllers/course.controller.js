@@ -3,19 +3,74 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateVideoUrl = exports.deleteCourse = exports.getAdminAllCourses = exports.addReplyToReview = exports.addReview = exports.addAnwser = exports.addQuestion = exports.getCourseByUser = exports.getAllCourses = exports.getSingleCourse = exports.editCourse = exports.uploadCourse = void 0;
+exports.generateVideoUrl = exports.deleteCourse = exports.getAdminAllCourses = exports.addReplyToReview = exports.addReview = exports.addAnwser = exports.addQuestion = exports.getCourseByUser = exports.getAllCourses = exports.getSingleCourse = exports.editCourse = exports.uploadCourse = exports.readPdf = exports.uploadPdf = void 0;
 const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const cloudinary_1 = __importDefault(require("cloudinary"));
 const course_service_1 = require("../services/course.service");
 const course_model_1 = __importDefault(require("../models/course.model"));
 // import { redis } from "../utils/redis";
+const fs_1 = __importDefault(require("fs"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const ejs_1 = __importDefault(require("ejs"));
 const sendMail_1 = __importDefault(require("../utils/sendMail"));
 const notification_Model_1 = __importDefault(require("../models/notification.Model"));
 const axios_1 = __importDefault(require("axios"));
+// upload pdf
+//  use before it uploadSinglePdfMiddleware("pdf") you will find it in utils folder
+exports.uploadPdf = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
+    try {
+        const data = req.body;
+        const course = await course_model_1.default.findById(data.courseId);
+        if (!course) {
+            return next(new ErrorHandler_1.default("course not found", 400));
+        }
+        ;
+        const idx = course.courseData
+            .findIndex(({ _id }) => _id.toString() == data.lessonId?.toString());
+        if (idx == -1) {
+            return next(new ErrorHandler_1.default("lesson not found", 400));
+        }
+        ;
+        course.courseData[idx].pdf.name = data.pdf;
+        await course.save();
+        res.status(200).json({
+            course
+        });
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
+    }
+});
+// Get Request source route pdf/:courseId/lesson/:lessonId
+exports.readPdf = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
+    try {
+        const data = req.params;
+        const course = await course_model_1.default.findById(data.courseId);
+        if (!course) {
+            return next(new ErrorHandler_1.default("course not found", 400));
+        }
+        ;
+        const idx = course.courseData
+            .findIndex(({ _id }) => _id.toString() == data.lessonId?.toString());
+        if (idx == -1) {
+            return next(new ErrorHandler_1.default("lesson not found", 400));
+        }
+        ;
+        const pdfName = course.courseData[idx]?.pdf?.name;
+        if (!pdfName) {
+            return next(new ErrorHandler_1.default("pdf not found", 400));
+        }
+        ;
+        res.setHeader('Content-Type', 'application/pdf');
+        const stream = fs_1.default.createReadStream(`uploads/${pdfName}`);
+        stream.pipe(res);
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
+    }
+});
 // upload course
 exports.uploadCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -117,7 +172,7 @@ exports.getCourseByUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, re
         if (!courseExists) {
             return next(new ErrorHandler_1.default("You are not eligible to access this course", 404));
         }
-        const course = await course_model_1.default.findById(courseId);
+        const course = await course_model_1.default.findById(courseId).populate("courseData.quizId");
         const content = course?.courseData;
         res.status(200).json({
             success: true,
